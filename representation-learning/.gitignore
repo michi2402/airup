@@ -1,3 +1,6 @@
-output/dataset.json
+input/*
+!input/README.md
+output/*
+!output/README.md
 word2vecTools/*
 !word2vecTools/README.md
