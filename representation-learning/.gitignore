@@ -1,0 +1,3 @@
+output/dataset.json
+word2vecTools/*
+!word2vecTools/README.md
