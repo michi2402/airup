@@ -4,7 +4,7 @@ import nltk
 from nltk.corpus import stopwords
 from nltk import pos_tag, word_tokenize
 
-from word2vec import expand_query_with_word2vec
+from .word2vec import expand_query_with_word2vec
 
 nltk.download('punkt')
 nltk.download('averaged_perceptron_tagger')
