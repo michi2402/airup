@@ -1,0 +1,1 @@
+Copy the downloaded and extracted files from the bioASQ word2vec model here
