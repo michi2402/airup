@@ -3,10 +3,10 @@ model_name: 'dmis-lab/biobert-v1.1'  # BioBERT pre-trained on biomedical literat
 
 # Training parameters
 seed: 42
-batch_size: 2
+batch_size: 16
 learning_rate: 2e-5
 num_epochs: 2
-warmup_steps: 0.1
+warmup_steps: 100
 max_length: 512
 validation_split: 0.1   # Percentage of training data to use for validation
 
@@ -17,5 +17,6 @@ questions_path: 'input/test_input.json'
 
 # Output paths
 data_set_output_path: './output/dataset.json'
-output_dir: './output/'
+output_dir: './output'
 result_dir: './output/results.json'
+w2v_model_output_path: './output/word2vec_model.kv'

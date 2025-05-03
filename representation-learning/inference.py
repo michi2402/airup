@@ -1,11 +1,10 @@
 import os
 import yaml
 from debugpy.common.json import JsonObject
-from gensim.corpora import Dictionary
 from sentence_transformers import SentenceTransformer, models, util
 from util.pubmed_api import PubMedAPI
-from util.query_preprocessing import preprocess_query_for_pubmed
-from util.word2vec import load_word2vec_model
+from util.query_preprocessing import preprocess_query_for_pubmed, extract_key_terms
+from util.word2vec import load_word2vec_model, get_synonyms_with_score
 import logging
 import re
 import json
@@ -22,7 +21,6 @@ def load_questions(file_path: str) -> JsonObject:
     with open(file_path, 'r') as f:
         questions = json.load(f)
     return questions
-
 
 def load_model(model_path: str) -> SentenceTransformer:
     """
@@ -42,33 +40,36 @@ def load_model(model_path: str) -> SentenceTransformer:
 
     return SentenceTransformer(modules=[word_embedding_model, pooling_model])
 
-def fetch_pubmed_documents(query: str) -> Dictionary:
-    """
-    Fetch PubMed documents based on a query.
-    :param query: the query to search for
-    :return: a dictionary of documents of the form {document_id: document_text}
-    """
-
 def load_config(config_path):
     """Load configuration from YAML file"""
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
     return config
 
-def infer_top_k_documents(model: SentenceTransformer, query_embedding, documents: dict, k: int = 10) -> list:
+def infer_top_k_documents(model: SentenceTransformer, question_embedding, synonyms_with_score: dict, documents: dict, k: int = 10) -> list:
     """
-    Infer the top k documents based on the query embedding.
+    Infer the top k documents based on the query embedding and synonyms.
     :param model: the SentenceTransformer model
-    :param query_embedding: the embedding of the query
-    :param documents: a dictionary of documents of the form {document_id: document_text}
+    :param question_embedding: the embedding of the query
+    :param synonyms_with_score: a dictionary of synonyms with their scores
+    :param documents: a dictionary of documents
     :param k: number of top documents to return
-    :return: a list of tuples (document_id, similarity_score)
+    :return: the best k documents
     """
     similarities = dict()
     for doc_id, json_doc in documents.items():
-        doc_text = json_doc.get("abstract", "")
+        doc_text = json_doc.get("abstract", "").lower()
+
+        # Replace synonyms in the document text
+        logger.debug(f"Original document text: {doc_text}")
+        for term, list_of_synonyms in synonyms_with_score.items():
+            for synonym, score in list_of_synonyms:
+                if synonym in doc_text:
+                    doc_text = doc_text.replace(synonym, term)
+        logger.debug(f"Modified document text: {doc_text}")
+        # Encode the modified document text
         doc_embedding = model.encode(doc_text, convert_to_tensor=True)
-        similarities[doc_id] = util.pytorch_cos_sim(query_embedding, doc_embedding)
+        similarities[doc_id] = util.pytorch_cos_sim(question_embedding, doc_embedding)
 
     # save 10 best results
     best_results = sorted(similarities.items(), key=lambda x: x[1], reverse=True)[:k]
@@ -76,12 +77,13 @@ def infer_top_k_documents(model: SentenceTransformer, query_embedding, documents
         logger.debug(f"Document ID: {doc_id}, Similarity Score: {score.item()}")
     return best_results
 
-def infer_top_k_snippets(model: SentenceTransformer, query_embedding, documents: dict, k: int = 10) -> list:
+def infer_top_k_snippets(model: SentenceTransformer, question_embedding, synonyms_with_score: dict, documents: dict, k: int = 10) -> list:
     # TODO: maybe use sliding window approach to get relevant snippets (dont forget offset adaption)
     """
     Infer the top k snippets based on the query embedding.
     :param model: the SentenceTransformer model
-    :param query_embedding: the embedding of the query
+    :param question_embedding: the embedding of the query
+    :param synonyms_with_score: a dictionary of synonyms with their scores
     :param documents: a dictionary of documents of the form {document_id: document_text}
     :param k: number of top snippets to return
     :return: a list of tuples (document_id, snippet_text, similarity_score)
@@ -90,10 +92,16 @@ def infer_top_k_snippets(model: SentenceTransformer, query_embedding, documents:
     all_snippets = []
     for doc_id, json_doc in documents.items():
         #process title
-        doc_title = json_doc.get("title", "")
+        doc_title = json_doc.get("title", "").lower()
+        logger.debug(f"Title: {doc_title}")
+        for term, list_of_synonyms in synonyms_with_score.items():
+            for synonym, score in list_of_synonyms:
+                if synonym in doc_title:
+                    doc_title = doc_title.replace(synonym, term)
+        logger.debug(f"Modified title: {doc_title}")
         title_embedding = model.encode(doc_title, convert_to_tensor=True)
-        title_similarity = util.pytorch_cos_sim(query_embedding, title_embedding)
-        all_snippets.append((doc_id, doc_title, title_similarity, "title", 0, 0 + len(doc_title)))
+        title_similarity = util.pytorch_cos_sim(question_embedding, title_embedding)
+        all_snippets.append((doc_id, json_doc.get("title", ""), title_similarity, "title", 0, 0 + len(doc_title)))
 
         # process abstract
         doc_abstract = json_doc.get("abstract", "")
@@ -105,8 +113,13 @@ def infer_top_k_snippets(model: SentenceTransformer, query_embedding, documents:
         for sentence in sentences:
             offset_in_begin_section = doc_abstract.find(sentence)
             offset_in_end_section = offset_in_begin_section + len(sentence)
-            sentence_embedding = model.encode(sentence, convert_to_tensor=True)
-            similarity = util.pytorch_cos_sim(query_embedding, sentence_embedding)
+            syn_sentence = sentence.lower()
+            for term, list_of_synonyms in synonyms_with_score.items():
+                for synonym, score in list_of_synonyms:
+                    if synonym in syn_sentence:
+                        syn_sentence = sentence.replace(synonym, term)
+            sentence_embedding = model.encode(syn_sentence, convert_to_tensor=True)
+            similarity = util.pytorch_cos_sim(question_embedding, sentence_embedding)
             all_snippets.append((doc_id, sentence, similarity, "abstract", offset_in_begin_section, offset_in_end_section))
 
     top_k_snippets = sorted(all_snippets, key=lambda x: x[2], reverse=True)[:k]
@@ -164,7 +177,7 @@ def main():
     questions = load_questions(config['questions_path'])
 
     logger.info("Loading Word2Vec model...")
-    w2v_model = load_word2vec_model(config['word2vec_model_path'])
+    w2v_model = load_word2vec_model(config['word2vec_model_path'], config['w2v_model_output_path'])
 
     logger.info("Loading SentenceTransformer model...")
     model = load_model(config['model_name']) #TODO: change to fine-tuned model
@@ -175,13 +188,21 @@ def main():
 
         query = preprocess_query_for_pubmed(question_text, model=w2v_model, max_terms=5)
         documents = pubmed_api.fetch_pubmed(query=query)
-        question_embedding = model.encode(question_text, convert_to_tensor=True)
-        best_docs = infer_top_k_documents(model, question_embedding, documents, k=10)
+        question_embedding = model.encode(question_text.lower(), convert_to_tensor=True)
+
+        key_terms = extract_key_terms(question_text, max_terms=5)
+        synonyms_with_score = dict()
+        for term in key_terms:
+            tmp = get_synonyms_with_score(term, w2v_model, top_n=5)
+            if term in tmp:
+                synonyms_with_score[term] = tmp[term]
+
+        best_docs = infer_top_k_documents(model, question_embedding, synonyms_with_score, documents, k=10)
 
         filtered_documents_for_snippets = {
             doc_id: json_doc for doc_id, json_doc in documents.items() if doc_id in [doc[0] for doc in best_docs]
         }
-        best_snippets = infer_top_k_snippets(model, question_embedding, filtered_documents_for_snippets, k=10)
+        best_snippets = infer_top_k_snippets(model, question_embedding, synonyms_with_score, filtered_documents_for_snippets, k=10)
 
         # save json file with results
         save_results_to_json(question_id, question_text, best_docs, best_snippets, config['result_dir'])
