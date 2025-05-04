@@ -5,6 +5,7 @@ import numpy as np
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 def load_word2vec_model(model_path: str, save_path: str) -> KeyedVectors:
     """
     Load a Word2Vec model from the specified path.
@@ -23,7 +24,8 @@ def load_word2vec_model(model_path: str, save_path: str) -> KeyedVectors:
     except FileNotFoundError:
         logger.info(f"Word2Vec model not found at {save_path}, loading from {model_path}")
 
-    with open(model_path + '/types.txt', 'r', encoding='utf-8') as f_types, open(model_path + '/vectors.txt', 'r', encoding='utf-8') as f_vectors:
+    with open(model_path + '/types.txt', 'r', encoding='utf-8') as f_types, open(model_path + '/vectors.txt', 'r',
+                                                                                 encoding='utf-8') as f_vectors:
         for word_line, vector_line in zip(f_types, f_vectors):
             word = word_line.strip()
             vector = np.fromstring(vector_line.strip(), sep=' ')
@@ -38,6 +40,7 @@ def load_word2vec_model(model_path: str, save_path: str) -> KeyedVectors:
     kv.save(save_path)
     return kv
 
+
 def expand_query_with_word2vec(term: str, model: KeyedVectors, top_n: int = 5) -> list[str]:
     """
     Expand a query term using a Word2Vec model.
@@ -47,23 +50,24 @@ def expand_query_with_word2vec(term: str, model: KeyedVectors, top_n: int = 5) -
     :return: A list of expanded terms.
     """
 
-    #expanded_terms = [term]
-    #try:
+    # expanded_terms = [term]
+    # try:
     #    similar_words = model.most_similar(term, topn=top_n)
     #    for word, score in similar_words:
     #        if score > .6 and len(word) > 2 and word not in expanded_terms:
     #            expanded_terms.append(word)
-    #except KeyError:
+    # except KeyError:
     #    logger.warning(f"Term '{term}' not found in Word2Vec model vocabulary.")
-    #return expanded_terms
+    # return expanded_terms
     expansion_terms = get_synonyms_with_score(term, model, top_n)
     expanded_terms = [term]
     try:
         for word, score in expansion_terms[term]:
-                expanded_terms.append(word)
+            expanded_terms.append(word)
     except KeyError:
         logger.warning(f"Term '{term}' not found in Word2Vec model vocabulary.")
     return expanded_terms
+
 
 def get_synonyms_with_score(term: str, model: KeyedVectors, top_n: int = 5) -> dict:
     """

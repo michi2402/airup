@@ -6,6 +6,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class PubMedAPI:
     def __init__(self, email: str, max_results: int = 100):
         """
@@ -14,7 +15,6 @@ class PubMedAPI:
         """
         Entrez.email = email
         self.max_results = max_results
-
 
     def fetch_pubmed(self, query: str) -> dict:
         """
@@ -78,7 +78,9 @@ class PubMedAPI:
         for record in records["PubmedArticle"]:
             pmid = "http://www.ncbi.nlm.nih.gov/pubmed/" + record["MedlineCitation"]["PMID"]
             title = record["MedlineCitation"]["Article"]["ArticleTitle"]
-            abstract = record["MedlineCitation"].get("Article", {}).get("Abstract", {}).get("AbstractText", ["No abstract available"])[0]
+            abstract = record["MedlineCitation"].get("Article", {}).get("Abstract", {}).get("AbstractText",
+                                                                                            ["No abstract available"])[
+                0]
             articles[pmid] = {"title": title, "abstract": abstract}
 
         logger.info(f"Fetched abstracts for {len(articles)} articles")

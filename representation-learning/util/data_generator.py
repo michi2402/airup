@@ -8,6 +8,7 @@ from torch.utils.data import Dataset
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class DataGenerator(Dataset):
     def __init__(self, data_path, output_path, generate_new_dataset=False):
         self.generate_new_dataset = generate_new_dataset
@@ -106,10 +107,9 @@ class DataGenerator(Dataset):
                 negative_examples_count += 1
 
         if negative_examples_count != max_negative_examples_count:
-            logger.warning(f"Generated {negative_examples_count} negative examples instead of {max_negative_examples_count}")
+            logger.warning(
+                f"Generated {negative_examples_count} negative examples instead of {max_negative_examples_count}")
         return negative_examples
-
-
 
     def write_dataset_to_file(self, output_path):
         """

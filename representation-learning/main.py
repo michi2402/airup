@@ -8,16 +8,18 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 def main():
     config = load_config('config.yaml')
-    full_dataset = data_generator.DataGenerator(config['train_data_path'], config['data_set_output_path'], generate_new_dataset=True)
-
+    full_dataset = data_generator.DataGenerator(config['train_data_path'], config['data_set_output_path'],
+                                                generate_new_dataset=True)
 
     logger.info("Setting up for training...")
     tokenizer = BertTokenizer.from_pretrained(config['model_name'])
     model = BertForSequenceClassification.from_pretrained(config['model_name'], num_labels=2)
 
-    train_data, val_data = train_test_split(full_dataset.data, test_size=config['validation_split'], random_state=config['seed'])
+    train_data, val_data = train_test_split(full_dataset.data, test_size=config['validation_split'],
+                                            random_state=config['seed'])
     train_dataset = QADataset(train_data, tokenizer)
     val_dataset = QADataset(val_data, tokenizer)
 
@@ -52,5 +54,6 @@ def load_config(config_path):
         config = yaml.safe_load(f)
     return config
 
-if __name__  == "__main__":
+
+if __name__ == "__main__":
     main()
