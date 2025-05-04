@@ -64,19 +64,4 @@ def extract_key_terms(question: str, max_terms: int = 5) -> list[str]:
     # Deduplicate and sort by length
     unique_phrases = sorted(set(noun_phrases), key=lambda x: len(x), reverse=True)[:max_terms]
 
-    # Fallback: if not enough noun phrases, use single words (original method)
-    if len(unique_phrases) < max_terms:
-        single_words = [
-            word for word, pos in pos_tags
-            if (pos.startswith('NN') or pos == 'JJ')
-               and word not in stop_words
-               and len(word) > 2
-        ]
-        # Fill up remaining slots
-        for word in single_words:
-            if word not in unique_phrases:
-                unique_phrases.append(word)
-            if len(unique_phrases) >= max_terms:
-                break
-
     return unique_phrases

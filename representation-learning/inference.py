@@ -190,7 +190,7 @@ def main():
     w2v_model = load_word2vec_model(config['word2vec_model_path'], config['w2v_model_output_path'])
 
     logger.info("Loading SentenceTransformer model...")
-    model = load_model(config['model_name'])  # TODO: change to fine-tuned model
+    model = load_model(config['output_dir'] + "/my_model")#config['model_name'])  # TODO: change to fine-tuned model
 
     for question in questions.get("questions", []):
         question_id = question.get("id", "")
