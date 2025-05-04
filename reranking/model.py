@@ -26,7 +26,7 @@ def rerank(question, docs):
     reranked_docs = sorted(zip(docs, scores.tolist()), key=lambda x: x[1], reverse=True)
     return reranked_docs
 
-test_data = get_testing_data("training13b.json")
+test_data = get_testing_data("../BioASQ-training13b/training13b.json")
 
 for question in test_data:
     passages =  [x[0] for x in test_data[question]]
