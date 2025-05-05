@@ -3,17 +3,18 @@ import torch
 import numpy as np
 import evaluate
 
+from reranking.config import *
 from reranking.data_preprocessing import get_training_data
 
 # Load pretrained reranker model and tokenizer
 #other options: "cross-encoder/ms-marco-TinyBERT-L-2-v2" , "BAAI/bge-reranker-base"
-model_name = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+model_name = CROSS_ENCODER_PRETRAINED_MODEL_MINILM_MARCO
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 
 def preprocess(training_data):
-    return tokenizer(training_data["question"], training_data["passage"], truncation=True, padding="max_length")
+    return tokenizer(training_data["question"], training_data["snippet"], truncation=True, padding="max_length")
 
-training_data = get_training_data("../BioASQ-training13b/training13b.json")
+training_data = get_training_data(DATA_PATH)
 
 
 tokenized_training_data = training_data.map(preprocess, batched=True)
@@ -29,7 +30,7 @@ def compute_metrics(p):
 
 
 training_args = TrainingArguments(
-    output_dir="./reranker",
+    output_dir=RERANKER_PATH,
     per_device_train_batch_size=8,
     num_train_epochs=3,
     eval_strategy="epoch",
@@ -49,5 +50,5 @@ trainer = Trainer(
 )
 
 trainer.train()
-trainer.save_model("./reranker")
-tokenizer.save_pretrained("./reranker")
+trainer.save_model(RERANKER_PATH)
+tokenizer.save_pretrained(RERANKER_PATH)
