@@ -184,7 +184,7 @@ def main():
     config = load_config('config.yaml')
 
     logger.info("Loading Questions...")
-    questions = load_questions(config['questions_path'])
+    questions = load_questions(config['train_data_path'])
 
     logger.info("Loading Word2Vec model...")
     w2v_model = load_word2vec_model(config['word2vec_model_path'], config['w2v_model_output_path'])
@@ -192,7 +192,12 @@ def main():
     logger.info("Loading SentenceTransformer model...")
     model = load_model(config['output_dir'] + "/my_model")#config['model_name'])  # TODO: change to fine-tuned model
 
+    counter = 0
+
     for question in questions.get("questions", []):
+        if counter > 3: # TODO: remove (only considers first 4 questions for now)
+            break
+        counter += 1
         question_id = question.get("id", "")
         question_text = question.get("body", "")
 

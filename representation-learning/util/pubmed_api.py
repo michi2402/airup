@@ -20,7 +20,6 @@ class PubMedAPI:
         """
         Search PubMed for articles matching the query.
         :param query: the search query
-        :param max_results: maximum number of results to return
         :return: a dictionary containing article informations
         """
         time.sleep(0.34)  # NCBI API rate limit (3 requests per second)
