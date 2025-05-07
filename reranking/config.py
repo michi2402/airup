@@ -24,3 +24,8 @@ TRAIN_FILE_EXTENSION = "_train_dataset"
 CROSS_ENCODER_PRETRAINED_MODEL_MINILM_MARCO = "cross-encoder/ms-marco-MiniLM-L12-v2"
 SENTENCE_TRANSFORMER_PRETRAINED_MODEL_MINILM = "all-MiniLM-L12-v2"
 SENTENCE_TRANSFORMER_BIOBERT = "dmis-lab/biobert-v1.1"
+
+#files
+INPUT_FILE_PATH = "./input/results.json"
+INPUT_FILE_DOCS = "./input/results_docs.json"
+OUTPUT_FILE_PATH = "./output/results.json"

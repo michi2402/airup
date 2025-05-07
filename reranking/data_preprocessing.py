@@ -27,7 +27,6 @@ def save_data_from_file(filename):
     with open(filename) as f:
         data = json.load(f)
 
-    rows = []
     question_groups = defaultdict(list)
 
     #positive samples
@@ -89,5 +88,41 @@ def get_testing_data(filename):
             grouped_data[question].append((snippet, document, label))
         return grouped_data
 
+def process_data(path):
+    with open(path) as f:
+        data = json.load(f)
 
+    question_groups = defaultdict(list)
 
+    for q in data["questions"]:
+        question = q["body"]
+        q_id = q["id"]
+        snippets = q.get("snippets", [])
+        for i, snippet in enumerate(snippets):
+            question_groups[question].append((
+                snippet["text"],
+                snippet["document"],
+                len(snippets) - i,
+                q_id,
+                snippet
+            ))
+    return question_groups
+
+def process_data_for_docs(path):
+    with open(path) as f:
+        data = json.load(f)
+
+    question_groups = defaultdict(list)
+    for q in data["questions"]:
+        keys = [list(item.keys())[0] for item in q["extra_wuensche"]]
+        question = q["body"]
+        q_id = q["id"]
+        docs = q["extra_wuensche"]
+        for i, doc in enumerate(docs):
+            question_groups[question].append((
+                keys[i],
+                doc[keys[i]],
+                len(q) - i,
+                q_id,
+            ))
+    return question_groups

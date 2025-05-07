@@ -1,3 +1,6 @@
+import json
+import os
+
 from tqdm import tqdm
 from alive_progress import alive_bar
 from reranking.config import DATA_PATH, CROSS_ENCODER_PRETRAINED_MODEL_MINILM_MARCO, RERANKER_PATH
@@ -19,9 +22,10 @@ def compute_metrics(model_path):
         for i, question in enumerate(test_data):
             snippets = [x[0] for x in test_data[question]]
             docs = [x[1] for x in test_data[question]]
+            q_ids = [x[3] for x in test_data[question]]
             true_relevance = test_data[question]
 
-            scores = rerank(tokenizer, model, question, snippets, docs)
+            scores = rerank(tokenizer, model, question, snippets, docs, q_ids)
 
             #collect tp and fp
             for j, tr in enumerate(true_relevance):
@@ -50,6 +54,10 @@ def compute_metrics(model_path):
         "F1": f1_total
     }
     return metrics
+
+
+
+
 
 metrics_marco = compute_metrics(CROSS_ENCODER_PRETRAINED_MODEL_MINILM_MARCO)
 metrics_cool = compute_metrics(RERANKER_PATH)
