@@ -31,12 +31,12 @@ def compute_metrics(p):
 
 training_args = TrainingArguments(
     output_dir=RERANKER_PATH,
-    per_device_train_batch_size=8,
-    num_train_epochs=3,
+    per_device_train_batch_size=BATCH_SIZE,
+    num_train_epochs=NUM_EPOCHS,
     eval_strategy="epoch",
     logging_dir="./logs",
     save_strategy="epoch",
-    logging_steps=10,
+    logging_steps=LOGGING_STEPS,
     load_best_model_at_end=True,
 )
 

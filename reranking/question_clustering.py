@@ -1,16 +1,21 @@
 from collections import defaultdict
 import random
+
+from safetensors import torch
 from sentence_transformers import SentenceTransformer
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from sklearn.cluster import DBSCAN
 from sklearn.metrics.pairwise import cosine_distances
+from transformers import AutoTokenizer
+
 from reranking.config import *
 
 def get_similar_questions(all_questions):
 
-    model = SentenceTransformer(SENETENCE_TRANSFORMER_PRETRAINED_MODEL_MINILM)
+    model = SentenceTransformer(SENTENCE_TRANSFORMER_PRETRAINED_MODEL_MINILM)
+
     q_embeddings = model.encode(all_questions, convert_to_numpy=True ,show_progress_bar=True) #?? as numpy or tensor
     clustering = DBSCAN(eps=0.3, min_samples=2, metric='cosine')
     clustering.fit(q_embeddings)
