@@ -63,8 +63,21 @@ def rank_snippet(documents, question, model, top_k=10):
                 "endSection": "abstract",
             })
 
+        title = json_obj.get("title", "")
+        title_embedding = model.encode(title, normalize_embeddings=True)
+        dot_score = util.dot_score(question_embedding, title_embedding)[0]
+        all_snippets.append({
+            "document": doc_id,
+            "text": title,
+            "score": dot_score.item(),
+            "offsetInBeginSection": 0,
+            "offsetInEndSection": len(title),
+            "beginSection": "title",
+            "endSection": "title",
+        })
+
     # Sort all snippets by score in descending order and take the top k
-    top_snippets = sorted(all_snippets, key=lambda x: x["score"], reverse=True)[:3]
+    top_snippets = sorted(all_snippets, key=lambda x: x["score"], reverse=True)[:top_k]
 
     for snippet in top_snippets:
         result.append({
@@ -78,7 +91,7 @@ def rank_snippet(documents, question, model, top_k=10):
 
     return result
 
-def save_results_to_json_util(question_id: str, question: str, document_ids: list[str], snippets: list, file_path: str, query: str = None):
+def save_results_to_json_util(question_id: str, question: str, question_type: str, document_ids: list[str], snippets: list, file_path: str, query: str = None):
     """
     Save the results to a JSON file.
     :param results: the results to save
@@ -94,9 +107,11 @@ def save_results_to_json_util(question_id: str, question: str, document_ids: lis
         data = {"questions": []}
 
     new_entry = {
-        "body": question,
         "id": question_id,
-        "documents": [doc_id for doc_id, score in document_ids],
+        "type": question_type,
+        "body": question,
+        "documents": [doc_id for doc_id, _ in document_ids],
+        #"extra_wuensche": [{doc_id: json_obj.get("abstract", "")} for doc_id, json_obj in document_ids],
         "snippets": snippets,
     }
 

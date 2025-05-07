@@ -80,13 +80,17 @@ def get_synonyms_with_score(term: str, model: KeyedVectors, top_n: int = 5) -> d
 
     synonyms = dict()
     try:
-        similar_words = model.most_similar(term, topn=top_n)
+        similar_words = model.most_similar(term)
         for word, score in similar_words:
-            if score > .6 and len(word) > 2:
+            if score > .75 and len(word) > 2:
                 if term in synonyms:
                     synonyms[term].append((word, score))
                 else:
                     synonyms[term] = [(word, score)]
     except KeyError:
         logger.warning(f"Term '{term}' not found in Word2Vec model vocabulary.")
+
+    # Sort synonyms by score
+    if term in synonyms:
+        synonyms[term] = sorted(synonyms[term], key=lambda x: x[1], reverse=True)
     return synonyms

@@ -19,7 +19,7 @@ def load_questions(file_path: str) -> JsonObject:
     :param file_path: the path to the file containing questions
     :return: a list of questions
     """
-    with open(file_path, 'r') as f:
+    with open(file_path, 'r', encoding='utf-8') as f:
         questions = json.load(f)
     return questions
 
@@ -53,7 +53,7 @@ def main():
     email = os.environ.get("STUDENT_EMAIL")
     if not email:
         raise ValueError("Please set the STUDENT_EMAIL environment variable.")
-    pubmed_api = PubMedAPI(email=email, max_results=100)
+    pubmed_api = PubMedAPI(email=email, max_results=300)
 
     logger.info("Loading configuration...")
     config = load_config('config.yaml')
@@ -64,7 +64,7 @@ def main():
         logger.info(f"Deleted existing results file: {config['result_dir']}")
 
     logger.info("Loading Questions...")
-    questions = load_questions(config['train_data_path'])
+    questions = load_questions(config['questions_path'])
 
     logger.info("Loading Word2Vec model...")
     w2v_model = load_word2vec_model(config['word2vec_model_path'], config['w2v_model_output_path'])
@@ -72,9 +72,10 @@ def main():
     logger.info("Loading SentenceTransformer model...")
     model = load_model(config['output_dir'] + "/my_model")
 
-    for question in questions.get("questions", [])[:10]:
+    for question in questions.get("questions", []):
         question_id = question.get("id", "")
         question_text = question.get("body", "")
+        question_type = question.get("type", "")
 
         query = preprocess_query_for_pubmed(question_text, model=w2v_model, max_terms=5)
         documents = pubmed_api.fetch_pubmed(query=query)
@@ -82,18 +83,19 @@ def main():
             logger.warning(f"No documents found for query: {query}")
             continue
 
-        hd = 0
-        for doc_id, json_doc in documents.items():
-            if question["documents"] and doc_id in question["documents"]:
-                hd += 1
-        logger.info(f"Question ID: {question_id}, Found {hd} out of {len(question['documents'])} relaevant docs")
+        # for evaluation
+        #hd = 0
+        #for doc_id, json_doc in documents.items():
+        #    if question["documents"] and doc_id in question["documents"]:
+        #        hd += 1
+        #logger.info(f"Question ID: {question_id}, Found {hd} out of {len(question['documents'])} relaevant docs")
 
         best_docs = rank_abstracts(documents, question_text, model, 10)
         filtered_documents_for_snippets = {
             doc_id: json_doc for doc_id, json_doc in documents.items() if doc_id in [doc[0] for doc in best_docs]
         }
         best_snippets = rank_snippet(filtered_documents_for_snippets, question_text, model, 10)
-        save_results_to_json_util(question_id, question_text, best_docs, best_snippets, config['result_dir'], query=query)
+        save_results_to_json_util(question_id, question_text, question_type, best_docs, best_snippets, config['result_dir'])
 
 
 if __name__ == "__main__":
