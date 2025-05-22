@@ -10,7 +10,7 @@ from reranking.model import load_model, rerank, rerank_docs
 
 def generate_results():
     data = process_data(INPUT_FILE_PATH)
-    data_docs = process_data_for_docs(INPUT_FILE_DOCS)
+    #data_docs = process_data_for_docs(INPUT_FILE_DOCS)
     tokenizer, model = load_model(RERANKER_PATH)
 
     with alive_bar(len(data), force_tty=True) as bar:
@@ -39,37 +39,30 @@ def generate_results():
             )
             bar()
 
-    with alive_bar(len(data_docs), force_tty=True) as bar:
-        for question in data_docs:
-            doc_links = [x[0] for x in data_docs[question]]
-            docs = [x[1] for x in data_docs[question]]
-            q_ids = [x[3] for x in data_docs[question]]
+#  with alive_bar(len(data_docs), force_tty=True) as bar:
+#      for question in data_docs:
+#          doc_links = [x[0] for x in data_docs[question]]
+#          docs = [x[1] for x in data_docs[question]]
+#          q_ids = [x[3] for x in data_docs[question]]
 
-            scores = rerank_docs(tokenizer, model, question, doc_links, docs, q_ids)
-            doc_scores = {}
-            snippet_scores = []
-            for doc, doc_link, score, q_id in scores:
-                doc_scores[doc_link] = score
+#          scores = rerank_docs(tokenizer, model, question, doc_links, docs, q_ids)
+#          doc_scores = {}
+#          snippet_scores = []
+#          for doc, doc_link, score, q_id in scores:
+#              doc_scores[doc_link] = score
 
-            sorted_docs = sorted(doc_scores.items(), key=lambda x: x[0], reverse=True)[:10]
-            save_results_to_json_util(scores[0][3],
-              question,
-              list(map(lambda x: x[0], sorted_docs)),
-        [],
-              "./output/results_docs.json"
-            )
-            bar()
+#          sorted_docs = sorted(doc_scores.items(), key=lambda x: x[0], reverse=True)[:10]
+#          save_results_to_json_util(scores[0][3],
+#            question,
+#            list(map(lambda x: x[0], sorted_docs)),
+#      [],
+#            "./output/results_docs.json"
+#          )
+#          bar()
 
 
 def save_results_to_json_util(question_id: str, question: str, document_ids: list[str], snippets, file_path: str):
-    """
-    Save the results to a JSON file.
-    :param results: the results to save
-    :param output_path: the path to save the JSON file
-    """
-
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
-
     if os.path.isfile(file_path):
         with open(file_path, 'r') as f:
             data = json.load(f)
@@ -119,9 +112,11 @@ def evaluate_output(result_file_path: str):
         print(f"TOTAL: {total_docs} docs, {total_snippets} snippets")
 
 
-#generate_results()
+
+
+generate_results()
 evaluate_output(INPUT_FILE_PATH)
 print("*" * 120)
 evaluate_output(OUTPUT_FILE_PATH)
 print("*" * 120)
-evaluate_output("./output/results_docs.json")
+#evaluate_output("./output/res.json")
