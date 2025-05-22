@@ -7,7 +7,6 @@ from reranking.config import *
 from reranking.data_preprocessing import get_training_data
 
 # Load pretrained reranker model and tokenizer
-#other options: "cross-encoder/ms-marco-TinyBERT-L-2-v2" , "BAAI/bge-reranker-base"
 model_name = CROSS_ENCODER_PRETRAINED_MODEL_MINILM_MARCO
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 

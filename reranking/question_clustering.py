@@ -1,19 +1,15 @@
-from collections import defaultdict
 import random
-
-from safetensors import torch
-from sentence_transformers import SentenceTransformer
 import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.decomposition import PCA
+
+from collections import defaultdict
+from sentence_transformers import SentenceTransformer
 from sklearn.cluster import DBSCAN
 from sklearn.metrics.pairwise import cosine_distances
-from transformers import AutoTokenizer
 
 from reranking.config import *
 
 def get_similar_questions(all_questions):
-
+    """Cluster questions by semantic similarity and return lists of similar question indices with varying similarity levels"""
     model = SentenceTransformer(SENTENCE_TRANSFORMER_PRETRAINED_MODEL_MINILM)
 
     q_embeddings = model.encode(all_questions, convert_to_numpy=True ,show_progress_bar=True) #?? as numpy or tensor
@@ -64,13 +60,3 @@ def get_similar_questions(all_questions):
 
         results.append([*similar, *medium_far, *super_far])
     return results
-
-#reduced = PCA(n_components=2).fit_transform(q_embeddings)
-#plt.figure(figsize=(8, 6))
-#for i, label in enumerate(labels):
-#    plt.scatter(reduced[i, 0], reduced[i, 1], label=f"Cluster {label}" if label != -1 else "Noise", alpha=0.6)
-#    plt.text(reduced[i, 0]+0.01, reduced[i, 1]+0.01, f"Q{i}", fontsize=9)
-#
-#plt.title("Question Clusters")
-#plt.grid(True)
-#plt.show()
