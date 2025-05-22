@@ -6,8 +6,21 @@ from reranking.data_preprocessing import get_testing_data
 from reranking.model import load_model, rerank
 
 
-def plot_loss():
-    with open("./reranker/checkpoint-3519/trainer_state.json") as f:
+def plot_loss(path: str):
+    """
+        Plots training and evaluation loss over time from a HuggingFace Trainer state JSON file.
+
+        Args:
+            path (str): The file path to the `trainer_state.json` file, which contains
+                        the `log_history` field with training and evaluation loss data.
+
+        The function extracts step-wise training and (if available) evaluation loss
+        values and plots them using Matplotlib.
+
+        Returns:
+            None. Displays a plot of the loss curves.
+        """
+    with open(path) as f:
         state = json.load(f)
 
     log_history = state["log_history"]
@@ -37,6 +50,25 @@ def plot_loss():
 
 
 def eyeball_evaluation_reranker():
+    """
+    Performs a manual "eyeball" evaluation of a reranker model by printing out
+    the top-ranked snippets for each question in the test dataset.
+
+    This function:
+      - Loads test data from a predefined path (DATA_PATH).
+      - Loads trained reranker model and tokenizer.
+      - For each question:
+          - Retrieves the candidate snippets and associated documents.
+          - Uses the reranker to score and sort the snippets.
+          - Prints the reranked results as predicted by the model.
+          - Also prints the original (labelled) ranking for comparison.
+
+    This allows for a side-by-side visual inspection of how well the model ranks
+    relevant information compared to ground-truth labels.
+
+    Returns:
+        None. Outputs the results to the console.
+    """
     test_data = get_testing_data(DATA_PATH)
     tokenizer, model = load_model()
 
