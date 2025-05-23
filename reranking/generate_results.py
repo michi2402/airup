@@ -9,8 +9,11 @@ from reranking.model import load_model, rerank, rerank_docs
 
 
 def generate_results():
+    """
+    Reranks snippets for each question in the input file and saves the results to a JSON file.
+    Documents are ranked based on the sum of their snippets.
+    """
     data = process_data(INPUT_FILE_PATH)
-    #data_docs = process_data_for_docs(INPUT_FILE_DOCS)
     tokenizer, model = load_model(RERANKER_PATH)
 
     with alive_bar(len(data), force_tty=True) as bar:
@@ -39,29 +42,44 @@ def generate_results():
             )
             bar()
 
-#  with alive_bar(len(data_docs), force_tty=True) as bar:
-#      for question in data_docs:
-#          doc_links = [x[0] for x in data_docs[question]]
-#          docs = [x[1] for x in data_docs[question]]
-#          q_ids = [x[3] for x in data_docs[question]]
+def generate_doc_only_results():
+    """
+    Reranks full documents for testing purposes.
+    """
+    data_docs = process_data_for_docs(INPUT_FILE_DOCS)
+    tokenizer, model = load_model(RERANKER_PATH)
 
-#          scores = rerank_docs(tokenizer, model, question, doc_links, docs, q_ids)
-#          doc_scores = {}
-#          snippet_scores = []
-#          for doc, doc_link, score, q_id in scores:
-#              doc_scores[doc_link] = score
+    with alive_bar(len(data_docs), force_tty=True) as bar:
+        for question in data_docs:
+            doc_links = [x[0] for x in data_docs[question]]
+            docs = [x[1] for x in data_docs[question]]
+            q_ids = [x[3] for x in data_docs[question]]
+            scores = rerank_docs(tokenizer, model, question, doc_links, docs, q_ids)
+            doc_scores = {}
+            for doc, doc_link, score, q_id in scores:
+              doc_scores[doc_link] = score
 
-#          sorted_docs = sorted(doc_scores.items(), key=lambda x: x[0], reverse=True)[:10]
-#          save_results_to_json_util(scores[0][3],
-#            question,
-#            list(map(lambda x: x[0], sorted_docs)),
-#      [],
-#            "./output/results_docs.json"
-#          )
-#          bar()
+            sorted_docs = sorted(doc_scores.items(), key=lambda x: x[0], reverse=True)[:10]
+            save_results_to_json_util(scores[0][3],
+            question,
+            list(map(lambda x: x[0], sorted_docs)),
+            [],
+            "./output/results_docs.json"
+            )
+            bar()
 
 
 def save_results_to_json_util(question_id: str, question: str, document_ids: list[str], snippets, file_path: str):
+    """
+    Append the model output for one question to the result file
+
+    :param question_id: ID of the question
+    :param question: plain-text question
+    :param document_ids: top 10 document IDs
+    :param snippets: top 10 snippets
+    :param file_path: output file path
+    :return:
+    """
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
     if os.path.isfile(file_path):
         with open(file_path, 'r') as f:
@@ -82,6 +100,11 @@ def save_results_to_json_util(question_id: str, question: str, document_ids: lis
 
 
 def evaluate_output(result_file_path: str):
+    """
+    Evaluate model with test split of training data
+
+    :param result_file_path:  model output json to evaluate
+    """
     result_data = {"questions": []}
     if os.path.isfile(result_file_path):
         with open(result_file_path, 'r') as f:
@@ -113,10 +136,9 @@ def evaluate_output(result_file_path: str):
 
 
 
-
+# Compare results before and after reranking
 generate_results()
 evaluate_output(INPUT_FILE_PATH)
 print("*" * 120)
 evaluate_output(OUTPUT_FILE_PATH)
 print("*" * 120)
-#evaluate_output("./output/res.json")
