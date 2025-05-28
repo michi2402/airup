@@ -1,6 +1,8 @@
 config.py
 word2vec/word2vecTools/*
+!word2vec/word2vecTools/.gitkeep
 .venv
 __pycache__/
 *.pyc
 output/*
+!output/.gitkeep
