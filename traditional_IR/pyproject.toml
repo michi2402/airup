@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "air-traditional-ir"
+version = "0.1.0"
+description = ""
+authors = ["Michael_Necemer <Michael.Necemer@infineon.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+requests = "^2.32.3"
+nltk = "^3.9.1"
+scikit-learn = "^1.6.1"
+gensim = "^4.3.3"
+rank-bm25 = "^0.2.2"
+scispacy = "^0.5.5"
+en_core_sci_sm = {url = "https://s3-us-west-2.amazonaws.com/ai2-s2-scispacy/releases/v0.5.4/en_core_sci_sm-0.5.4.tar.gz"}
+
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
